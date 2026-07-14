@@ -91,7 +91,7 @@ def visualize_samples(images, labels, positions, num_samples=5, save_name="sampl
     
     rect = patches.Rectangle((x, y), 28, 28, linewidth=1.5, edgecolor='r', facecolor='none')
     ax.add_patch(rect)
-    ax.set_title(f"Label: {classes[label_idx]}\\nPos: (y={y}, x={x})", fontsize=10)
+    ax.set_title(f"Label: {classes[label_idx]}\nPos: (y={y}, x={x})", fontsize=10)
     ax.axis('off')
       
   plt.tight_layout()
