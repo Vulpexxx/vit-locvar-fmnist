@@ -1,5 +1,11 @@
-# ignore processed data files
-processed_data/
+# ignore processed data files but allow the placeholder file to be tracked
+processed_data/*
+!/processed_data/placeholder.txt
 
-# ignore raw data files
-data/
+# ignore raw data files but allow the placeholder file to be tracked
+data/*
+!/data/placeholder.txt
+
+# ignore checkpoints files but allow the placeholder file to be tracked
+checkpoints/*
+!/checkpoints/placeholder.txt
