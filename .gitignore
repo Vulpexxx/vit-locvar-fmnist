@@ -1,0 +1,5 @@
+# ignore processed data files
+processed_data/
+
+# ignore raw data files
+data/
