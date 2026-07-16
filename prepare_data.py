@@ -7,7 +7,7 @@ import torch
 import torchvision
 import torchvision.transforms as transform
 
-def create_custom_fashion_mnist(root_dir='./data', save_dir='./processed_data', canvas_size=64, is_train=True, mode='translated'):
+def create_custom_fashion_mnist(root_dir='./data', save_dir='./processed_data', canvas_size=64, is_train=True, mode='A'):
   """
   Generates a custom FashionMNIST dataset and saves it as a .pt file.
   
@@ -16,9 +16,9 @@ def create_custom_fashion_mnist(root_dir='./data', save_dir='./processed_data', 
     save_dir: Directory to save the processed .pt tensors.
     canvas_size: The size of the background canvas (e.g., 128x128).
     is_train: Boolean indicating whether to process train or test set.
-    mode: 'translated' (random position) or 'centered' (fixed center position).
+    mode: 'A' (random position) or 'B' (fixed center position).
   """
-  print(f"Preparing {mode} {'train' if is_train else 'test'} dataset...")
+  print(f"Preparing mode {mode} {'train' if is_train else 'test'} dataset...")
   
   # Load original FashionMNIST
   dataset = torchvision.datasets.FashionMNIST(
@@ -43,14 +43,14 @@ def create_custom_fashion_mnist(root_dir='./data', save_dir='./processed_data', 
     img, label = dataset[i]
     
     # Determine the position based on the selected mode
-    if mode == 'translated':
+    if mode == 'A':
       y = np.random.randint(0, max_y + 1)
       x = np.random.randint(0, max_x + 1)
-    elif mode == 'centered':
+    elif mode == 'B':
       y = max_y // 2
       x = max_x // 2
     else:
-      raise ValueError("Mode must be either 'translated' or 'centered'")
+      raise ValueError("Mode must be either 'A' or 'B'")
 
     # Place the original image onto the canvas
     processed_images[i, 0, y:y+img_size, x:x+img_size] = img[0]
@@ -59,7 +59,7 @@ def create_custom_fashion_mnist(root_dir='./data', save_dir='./processed_data', 
 
   # Create directory and save the dataset
   os.makedirs(save_dir, exist_ok=True)
-  filename = f"{mode}_fashion_mnist_{'train' if is_train else 'test'}.pt"
+  filename = f"{mode}_fmnist_{'train' if is_train else 'test'}.pt"
   save_path = os.path.join(save_dir, filename)
 
   torch.save({
@@ -110,16 +110,16 @@ if __name__ == "__main__":
   np.random.seed(42)
   torch.manual_seed(42)
 
-  # 1. Generate TRANSLATED datasets
-  train_imgs_t, train_labels_t, train_pos_t = create_custom_fashion_mnist(is_train=True, mode='translated')
-  test_imgs_t, test_labels_t, test_pos_t = create_custom_fashion_mnist(is_train=False, mode='translated')
+  # 1. Generate datasets for mode 'A'
+  train_imgs_a, train_labels_a, train_pos_a = create_custom_fashion_mnist(is_train=True, mode='A')
+  test_imgs_a, test_labels_a, test_pos_a = create_custom_fashion_mnist(is_train=False, mode='A')
 
-  # 2. Generate CENTERED datasets
-  train_imgs_c, train_labels_c, train_pos_c = create_custom_fashion_mnist(is_train=True, mode='centered')
-  test_imgs_c, test_labels_c, test_pos_c = create_custom_fashion_mnist(is_train=False, mode='centered')
+  # 2. Generate datasets for mode 'B'
+  train_imgs_b, train_labels_b, train_pos_b = create_custom_fashion_mnist(is_train=True, mode='B')
+  test_imgs_b, test_labels_b, test_pos_b = create_custom_fashion_mnist(is_train=False, mode='B')
 
   # 3. Visualize to confirm
-  print("Visualizing Translated Samples...")
-  visualize_samples(train_imgs_t, train_labels_t, train_pos_t, num_samples=5, save_name="translated_samples.png")
-  print("Visualizing Centered Samples...")
-  visualize_samples(train_imgs_c, train_labels_c, train_pos_c, num_samples=5, save_name="centered_samples.png")
+  print("Visualizing Mode 'A' Samples...")
+  visualize_samples(train_imgs_a, train_labels_a, train_pos_a, num_samples=5, save_name="mode_A_samples.png")
+  print("Visualizing Mode 'B' Samples...")
+  visualize_samples(train_imgs_b, train_labels_b, train_pos_b, num_samples=5, save_name="mode_B_samples.png")

@@ -18,8 +18,8 @@ def parse_args():
   parser = argparse.ArgumentParser(description='PyTorch Translated FashionMNIST Training')
 
   # Dataset
-  parser.add_argument('--train-data', type=str, default='./translated_data/translated_fashion_mnist_train.pt', help='path to train data')
-  parser.add_argument('--val-data', type=str, default='./translated_data/translated_fashion_mnist_test.pt', help='path to val data')
+  parser.add_argument('--train-data', type=str, default='./processed_data/A_fmnist_train.pt', help='path to train data')
+  parser.add_argument('--val-data', type=str, default='./processed_data/A_fmnist_test.pt', help='path to val data')
   
   # Model
   parser.add_argument('--model-type', type=str, default='vit', choices=['vit', 'cnn'], help='choose model architecture')
@@ -165,7 +165,7 @@ def main():
     # Save best model
     if val_acc > best_acc:
       best_acc = val_acc
-      save_path = os.path.join(args.save_dir, f'{args.model_type}_best_model.pth')
+      save_path = os.path.join(args.save_dir, f'{args.model_type}_{args.train_data.split("/")[-1].split("_")[0]}_{args.val_data.split("/")[-1].split("_")[0]}.pth')
       torch.save(model.state_dict(), save_path)
       print(f"=> Best model saved at epoch {epoch} with acc {best_acc:.2f}%")
 
