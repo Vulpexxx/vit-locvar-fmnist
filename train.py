@@ -10,7 +10,10 @@ from models.vit import ViT
 from models.cnn import CNN
 from datasets.custom_fmnist import CustomFashionMNIST
 from utils import AverageMeter, accuracy
-
+train_acc_record = []
+val_acc_record = []
+train_loss_record = []
+val_loss_record = []
 
 def parse_args():
   '''Parses command line arguments for training the model
@@ -28,7 +31,7 @@ def parse_args():
   parser.add_argument('--embed-dim', type=int, default=128, help='embedding dimension')
   parser.add_argument('--depth', type=int, default=4, help='transformer depth')
   parser.add_argument('--num-heads', type=int, default=4, help='number of attention heads')
-  
+  parser.add_argument("--patch-type", type=str, default="conv", choices=["conv", "linear"], help="Patch embedding mode: conv / linear")
   # Optimization
   parser.add_argument('--epochs', default=15, type=int, help='number of total epochs to run')
   parser.add_argument('--batch-size', default=128, type=int, help='mini-batch size')
@@ -86,7 +89,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, args):
             f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
             f'Loss {losses.val:.4f} ({losses.avg:.4f})\t'
             f'Acc@1 {top1.val:.3f} ({top1.avg:.3f})')
-
+ return losses.avg, top1.avg
 
 def validate(val_loader, model, criterion, device, args):
   '''Evaluates the model on the validation set
@@ -117,8 +120,7 @@ def validate(val_loader, model, criterion, device, args):
       end = time.time()
       
   print(f' * Validation Acc@1 {top1.avg:.3f}% | Loss {losses.avg:.4f}')
-  return top1.avg
-
+  return top1.avg, losses.avg
 
 def main():
   args = parse_args()
@@ -145,6 +147,7 @@ def main():
       embed_dim=args.embed_dim,
       depth=args.depth,
       num_heads=args.num_heads
+      patch_type=args.patch_type
     ).to(device)
   elif args.model_type == 'cnn':
     model = CNN(in_chans=1, num_classes=10).to(device)
@@ -157,15 +160,29 @@ def main():
   
   # 4. Training Loop
   best_acc = 0.0
-  for epoch in range(args.epochs):
-    train(train_loader, model, criterion, optimizer, epoch, device, args)
-    
-    val_acc = validate(val_loader, model, criterion, device, args)
+    for epoch in range(args.epochs):
+    epoch_start = time.time()
+    train_loss, train_acc = train(train_loader, model, criterion, optimizer, epoch, device, args)
+    val_acc, val_loss = validate(val_loader, model, criterion, device, args)
+
+    train_acc_record.append(train_acc)
+    val_acc_record.append(val_acc)
+    train_loss_record.append(train_loss)
+    val_loss_record.append(val_loss)
+
+    epoch_cost = time.time() - epoch_start
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"======本轮实验配置与数据======")
+    print(f"patch_type: {args.patch_type}, patch_size: {args.patch_size}")
+    print(f"单轮训练耗时: {epoch_cost:.2f} s")
+    print(f"模型总参数量: {total_params:,}")
+    print(f"本轮验证准确率: {val_acc:.2f} %")
+    print("==============================\n")
     
     # Save best model
     if val_acc > best_acc:
       best_acc = val_acc
-      save_path = os.path.join(args.save_dir, f'{args.model_type}_{args.train_data.split("/")[-1].split("_")[0]}_{args.val_data.split("/")[-1].split("_")[0]}.pth')
+      save_path = os.path.join(args.save_dir, f'{args.model_type}_{args.train_data.split("/")[-1].split("_")[0]}_{args.val_data.split("/")[-1].split("_")[0]}_{args.patch_type}_{args.patch_size}.pth')
       torch.save(model.state_dict(), save_path)
       print(f"=> Best model saved at epoch {epoch} with acc {best_acc:.2f}%")
 
