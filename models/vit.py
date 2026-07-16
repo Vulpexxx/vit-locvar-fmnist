@@ -1,25 +1,47 @@
 import torch
 import torch.nn as nn
 
+class LinearPatchEmbedding(nn.Module):
+    def __init__(self, img_size=64, patch_size=16, in_chans=1, embed_dim=128):
+        super().__init__()
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.num_patches = (img_size // patch_size) ** 2
+        self.proj = nn.Linear(in_chans * patch_size * patch_size, embed_dim)
+
+    def forward(self, x):
+        B, C, H, W = x.shape
+        x = x.unfold(2, self.patch_size, self.patch_size).unfold(3, self.patch_size, self.patch_size)
+        x = x.permute(0, 2, 3, 1, 4, 5).reshape(B, self.num_patches, -1)
+        x = self.proj(x)
+        return x
+
+
 class ViT(nn.Module):
-  def __init__(self, img_size=128, patch_size=16, in_chans=1, num_classes=10, 
-               embed_dim=128, depth=4, num_heads=4, mlp_ratio=4.0):
+  def __init__(self, img_size=64, patch_size=16, in_chans=1, num_classes=10, 
+               embed_dim=128, depth=4, num_heads=4, mlp_ratio=4.0, patch_type="conv"):
     super(ViT, self).__init__()
 
     self.img_size = img_size
     self.patch_size = patch_size
     self.num_patches = (img_size // patch_size) ** 2
 
-    # 1. Patch Embedding
-    self.patch_embed = nn.Conv2d(
-      in_channels=in_chans,
-      out_channels=embed_dim, 
-      kernel_size=patch_size,
-      stride=patch_size
-    )
+    # 1. conv / linear Patch Embedding
+    if patch_type == "conv":
+        self.patch_embed = nn.Conv2d(
+          in_channels=in_chans,
+          out_channels=embed_dim, 
+          kernel_size=patch_size,
+          stride=patch_size
+        )
+    elif patch_type == "linear":
+        self.patch_embed = LinearPatchEmbedding(img_size, patch_size, in_chans, embed_dim)
+    else:
+        raise ValueError("patch_type only support 'conv' or 'linear'")
 
+   
     # 2. Class Token & Absolute Positional Encoding
-    self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+   self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
     self.pos_embed = nn.Parameter(torch.randn(1, self.num_patches + 1, embed_dim) * 0.02)
 
     # 3. Transformer Encoder Blocks
@@ -39,10 +61,11 @@ class ViT(nn.Module):
 
   def forward(self, x):
     B = x.shape[0]
-
-    # Shape change: [B, 1, 128, 128] -> [B, embed_dim, 8, 8] -> [B, 64, embed_dim] 
-    x = self.patch_embed(x).flatten(2).transpose(1, 2)
-
+    if isinstance(self.patch_embed, nn.Conv2d):
+        x = self.patch_embed(x).flatten(2).transpose(1, 2)
+    else:
+        x = self.patch_embed(x)
+   
     # Expand and concatenate CLS token: [B, 65, embed_dim] 
     cls_tokens = self.cls_token.expand(B, -1, -1)
     x = torch.cat((cls_tokens, x), dim=1)
