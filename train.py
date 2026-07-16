@@ -89,7 +89,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, args):
             f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
             f'Loss {losses.val:.4f} ({losses.avg:.4f})\t'
             f'Acc@1 {top1.val:.3f} ({top1.avg:.3f})')
- return losses.avg, top1.avg
+      return losses.avg, top1.avg
 
 def validate(val_loader, model, criterion, device, args):
   '''Evaluates the model on the validation set
