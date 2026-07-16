@@ -10,6 +10,7 @@ from models.vit import ViT
 from models.cnn import CNN
 from datasets.custom_fmnist import CustomFashionMNIST
 from utils import AverageMeter, accuracy
+
 train_acc_record = []
 val_acc_record = []
 train_loss_record = []
@@ -89,7 +90,8 @@ def train(train_loader, model, criterion, optimizer, epoch, device, args):
             f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
             f'Loss {losses.val:.4f} ({losses.avg:.4f})\t'
             f'Acc@1 {top1.val:.3f} ({top1.avg:.3f})')
-      return losses.avg, top1.avg
+  # return 移到for循环外面
+  return losses.avg, top1.avg
 
 def validate(val_loader, model, criterion, device, args):
   '''Evaluates the model on the validation set
@@ -146,13 +148,13 @@ def main():
       patch_size=args.patch_size,
       embed_dim=args.embed_dim,
       depth=args.depth,
-      num_heads=args.num_heads
+      num_heads=args.num_heads,
       patch_type=args.patch_type
     ).to(device)
   elif args.model_type == 'cnn':
     model = CNN(in_chans=1, num_classes=10).to(device)
   else:
-    raise ValueError(f"Unknown model type: {args.model_type}")
+    raise ValueError(f"Unknown model type")
   
   # 3. Criterion & Optimizer
   criterion = nn.CrossEntropyLoss().to(device)
@@ -160,7 +162,7 @@ def main():
   
   # 4. Training Loop
   best_acc = 0.0
-    for epoch in range(args.epochs):
+  for epoch in range(args.epochs):
     epoch_start = time.time()
     train_loss, train_acc = train(train_loader, model, criterion, optimizer, epoch, device, args)
     val_acc, val_loss = validate(val_loader, model, criterion, device, args)
