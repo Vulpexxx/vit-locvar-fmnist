@@ -18,9 +18,9 @@ plt.plot(conv8, label="Conv-Patch8")
 plt.plot(conv16, label="Conv-Patch16")
 
 # 图表文字
-plt.title("不同Patch方式、Patch Size验证准确率收敛曲线")
-plt.xlabel("Epoch 训练轮数")
-plt.ylabel("验证准确率 %")
+plt.title("Validation Accuracy Convergence Curve of Different Patch Methods and Patch Sizes", fontsize=14)
+plt.xlabel("Training Epoch", fontsize=12)
+plt.ylabel("Validation Accuracy (%)", fontsize=12)
 plt.legend()
 plt.grid(alpha=0.3)
 
