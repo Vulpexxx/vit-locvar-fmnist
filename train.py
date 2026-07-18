@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 
 from models.vit import ViT
 from models.cnn import CNN
+from models.mlp import MLP
 from datasets.custom_fmnist import CustomFashionMNIST
 from utils import AverageMeter, accuracy
 
@@ -26,7 +27,7 @@ def parse_args():
   parser.add_argument('--val-data', type=str, default='./processed_data/A_fmnist_test.pt', help='path to val data')
   
   # Model
-  parser.add_argument('--model-type', type=str, default='vit', choices=['vit', 'cnn'], help='choose model architecture')
+  parser.add_argument('--model-type', type=str, default='vit', choices=['vit', 'cnn', 'mlp'], help='choose model architecture')
   parser.add_argument('--img-size', type=int, default=64, help='input image size')
   parser.add_argument('--patch-size', type=int, default=8, help='patch size')
   parser.add_argument('--embed-dim', type=int, default=128, help='embedding dimension')
@@ -153,8 +154,10 @@ def main():
     ).to(device)
   elif args.model_type == 'cnn':
     model = CNN(in_chans=1, num_classes=10).to(device)
+  elif args.model_type == 'mlp':
+    model = MLP(input_size=64*64, num_classes=10).to(device)
   else:
-    raise ValueError(f"Unknown model type")
+    raise ValueError(f"Unknown model type: {args.model_type}")
   
   # 3. Criterion & Optimizer
   criterion = nn.CrossEntropyLoss().to(device)
