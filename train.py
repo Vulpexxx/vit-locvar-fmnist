@@ -177,10 +177,15 @@ def main():
 
     epoch_cost = time.time() - epoch_start
     total_params = sum(p.numel() for p in model.parameters())
+    param_size = sum(p.numel() * p.element_size() for p in model.parameters())
+    buffer_size = sum(b.numel() * b.element_size() for b in model.buffers())
+    total_size_mb = (param_size + buffer_size) / (1024 * 1024)
+
     print(f"======本轮实验配置与数据======")
     print(f"patch_type: {args.patch_type}, patch_size: {args.patch_size}")
     print(f"单轮训练耗时: {epoch_cost:.2f} s")
     print(f"模型总参数量: {total_params:,}")
+    print(f"模型占用大小: {total_size_mb:.2f} MB")
     print(f"本轮验证准确率: {val_acc:.2f} %")
     print("==============================\n")
     
